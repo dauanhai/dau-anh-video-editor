@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>App Edit Video Đậu Ánh</title>
+<style>
+  :root {
+    --bg: #111214;
+    --panel: #1a1b1e;
+    --border: #2c2d31;
+    --text: #f2f2f2;
+    --muted: #9a9a9f;
+    --neon: #FFF000;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  main {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    padding: 20px 24px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .panel h2 { font-size: 14px; margin: 0 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .clip-list { display: flex; flex-direction: column; gap: 6px; max-height: 70vh; overflow-y: auto; }
+  .clip-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #202124; border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; font-size: 13px;
+  }
+  .clip-item button {
+    background: var(--neon); color: #111; border: none; border-radius: 4px;
+    padding: 4px 8px; cursor: pointer; font-weight: 600; font-size: 12px;
+  }
+  .hookbox {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px;
+    background: #17181a;
+  }
+  .hookbox label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+  .hookbox input[type=text] {
+    width: 100%; padding: 6px 8px; background: #0f1011; border: 1px solid var(--border);
+    color: var(--text); border-radius: 4px;
+  }
+  .timeline { display: flex; flex-direction: column; gap: 10px; }
+  .tl-item {
+    background: #202124; border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .tl-head { display: flex; align-items: center; gap: 8px; }
+  .tl-idx { font-weight: 700; color: var(--neon); }
+  .tl-name { font-size: 13px; word-break: break-all; flex: 1; }
+  .tl-actions { display: flex; gap: 4px; }
+  .tl-actions button {
+    background: #2c2d31; color: var(--text); border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 8px; cursor: pointer; font-size: 12px;
+  }
+  .tl-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tl-row-label { font-size: 11px; color: var(--muted); width: 100%; margin-bottom: -4px; }
+  .tl-item input[type=text] {
+    padding: 6px 8px; background: #0f1011; border: 1px solid var(--border);
+    color: var(--text); border-radius: 4px; font-size: 12px;
+  }
+  .tl-item input[type=text].full { width: 100%; }
+  .tl-item select {
+    padding: 6px 4px; background: #0f1011; border: 1px solid var(--border);
+    color: var(--text); border-radius: 4px; font-size: 12px;
+  }
+  .swatch-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swatch {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .swatch.selected { border-color: var(--neon); box-shadow: 0 0 0 2px rgba(255,240,0,.3); }
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; padding: 12px; }
+    #resultBox video { max-width: 100%; }
+  }
+  .render-bar { margin-top: 20px; display: flex; align-items: center; gap: 14px; }
+  #renderBtn {
+    background: var(--neon); color: #111; border: none; border-radius: 6px;
+    padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 14px;
+  }
+  #renderBtn:disabled { opacity: .5; cursor: not-allowed; }
+  .progress-wrap { flex: 1; background: #0f1011; border-radius: 6px; height: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-bar { height: 100%; background: var(--neon); width: 0%; transition: width .3s; }
+  #logBox {
+    margin-top: 14px; background: #0f1011; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; font-family: Consolas, monospace; font-size: 12px; max-height: 180px; overflow-y: auto;
+    white-space: pre-wrap; color: var(--muted);
+  }
+  #resultBox { margin-top: 16px; }
+  #resultBox video { width: 100%; max-width: 380px; border-radius: 8px; border: 1px solid var(--border); }
+  .empty-hint { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+  .hl-wrap { padding: 0 24px 24px; }
+  #rawVideoList .clip-item button { background: #b33; color: #fff; }
+  @media (max-width: 720px) { .hl-wrap { padding: 0 12px 12px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>App Edit Video Đậu Ánh</h1>
+  <p>Chọn clip → sắp thứ tự → gõ từ khóa → chọn kiểu chữ/font/chữ chạy tuỳ ý → bấm Render.</p>
+</header>
+<main>
+  <div class="panel">
+    <h2>Clip có sẵn ({{ clips|length }})</h2>
+    <div class="clip-list" id="availableList">
+      {% for c in clips %}
+      <div class="clip-item" data-file="{{ c }}">
+        <span>{{ c }}</span>
+        <button onclick="addClip('{{ c }}')">+ Thêm</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Dựng video</h2>
+
+    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px;">Tỉ lệ khung hình (đồng nhất cho cả video)</label>
+    <select id="aspectKey" style="margin-bottom:12px;">
+      {% for key, a in aspects.items() %}<option value="{{ key }}" {% if key==default_aspect %}selected{% endif %}>{{ a.label }}</option>{% endfor %}
+    </select>
+
+    <div class="hookbox">
+      <label><input type="checkbox" id="hookEnabled"> Thêm hook mở đầu cho clip đầu tiên</label>
+      <label>Tiêu đề</label>
+      <input type="text" id="hookTitle" placeholder="AI EDIT VIDEO">
+      <label>Dòng phụ</label>
+      <input type="text" id="hookAccent" placeholder="DEMO TỰ ĐỘNG">
+      <div class="tl-row-label" style="margin-top:8px;">Màu tiêu đề hook (chạm để chọn)</div>
+      <div class="swatch-row" id="hookSwatches">
+        {% for key, s in styles.items() %}
+        <div class="swatch {% if key==default_style %}selected{% endif %}" data-style="{{ key }}"
+             style="background:{{ s.plate_css }}; color:{{ s.text_css }};" title="{{ s.label }}"
+             onclick="selectHookStyle('{{ key }}')">Aa</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="hookbox">
+      <label><input type="checkbox" id="musicEnabled" checked> Tự động thêm nhạc nền cho video (chọn ngẫu nhiên 1 bài mỗi lần render)</label>
+      <label>Thư viện nhạc (<span id="musicCount">0</span> bài) — tải file mp3 lên:</label>
+      <input type="file" id="musicUpload" accept=".mp3,.wav,.m4a,.aac">
+      <div id="musicUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
+    </div>
+
+    <h2>Danh sách sẽ dựng (theo thứ tự)</h2>
+    <div class="timeline" id="timeline">
+      <div class="empty-hint" id="emptyHint">Chưa có clip nào — bấm "+ Thêm" ở bên trái.</div>
+    </div>
+
+    <div class="render-bar">
+      <button id="renderBtn" onclick="startRender()">Render video</button>
+      <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+      <span id="percentLabel" style="font-size:13px;color:var(--muted)">0%</span>
+    </div>
+    <div id="logBox"></div>
+    <div id="resultBox"></div>
+  </div>
+</main>
+
+<div class="hl-wrap">
+  <div class="panel">
+    <h2>🎬 Highlight tự động (video dài → video ngắn ~90s)</h2>
+    <p style="color:var(--muted);font-size:12.5px;margin-top:-4px;">
+      Tải video quay dài lên, AI nghe lời thoại + tự chọn những đoạn "động" (không đứng hình, không im lặng) hay nhất, tự cắt ghép lại thành video ngắn.
+      Đây là chọn theo tín hiệu kỹ thuật, không phải AI hiểu "đẹp" theo cảm nhận con người.
+    </p>
+
+    <label style="display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;">Tải video dài lên (có thể chọn nhiều file, .mp4/.mov):</label>
+    <input type="file" id="rawVideoUpload" accept=".mp4,.mov,.m4v" multiple>
+    <div id="rawUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
+
+    <div class="clip-list" id="rawVideoList" style="margin-top:10px;"></div>
+
+    <div class="tl-row" style="margin-top:14px;">
+      <label style="font-size:12px;">Độ dài mong muốn (giây):
+        <input type="text" id="hlTargetDuration" value="90" style="width:60px;margin-left:6px;">
+      </label>
+      <label style="font-size:12px;"><input type="checkbox" id="hlAutoCaption" checked> 🎙️ Phụ đề tự động theo lời thoại</label>
+      <label style="font-size:12px;"><input type="checkbox" id="hlMusicEnabled" checked> Nhạc nền tự động</label>
+    </div>
+
+    <div style="margin-top:10px;">
+      <select id="hlFont">
+        {% for key, f in fonts.items() %}<option value="{{ key }}" {% if key==default_font %}selected{% endif %}>{{ f.label }}</option>{% endfor %}
+      </select>
+      <select id="hlAspectKey">
+        {% for key, a in aspects.items() %}<option value="{{ key }}" {% if key==default_aspect %}selected{% endif %}>{{ a.label }}</option>{% endfor %}
+      </select>
+      <div class="tl-row-label" style="margin-top:8px;">Kiểu chữ / màu</div>
+      <div class="swatch-row" id="hlSwatches">
+        {% for key, s in styles.items() %}
+        <div class="swatch {% if key==default_style %}selected{% endif %}" data-style="{{ key }}"
+             style="background:{{ s.plate_css }}; color:{{ s.text_css }};" title="{{ s.label }}"
+             onclick="selectHlStyle('{{ key }}')">Aa</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="hookbox" style="margin-top:14px;">
+      <label><input type="checkbox" id="hlHookEnabled"> Thêm hook mở đầu</label>
+      <label>Tiêu đề</label>
+      <input type="text" id="hlHookTitle" placeholder="AI EDIT VIDEO">
+      <label>Dòng phụ</label>
+      <input type="text" id="hlHookAccent" placeholder="DEMO TỰ ĐỘNG">
+    </div>
+
+    <div class="render-bar">
+      <button id="hlRenderBtn" onclick="startHighlightRender()">Tạo Highlight</button>
+      <div class="progress-wrap"><div class="progress-bar" id="hlProgressBar"></div></div>
+      <span id="hlPercentLabel" style="font-size:13px;color:var(--muted)">0%</span>
+    </div>
+    <div id="hlLogBox"></div>
+    <div id="hlResultBox"></div>
+  </div>
+</div>
+
+<script>
+const FONTS = {{ fonts|tojson }};
+const STYLES = {{ styles|tojson }};
+const DEFAULT_FONT = "{{ default_font }}";
+const DEFAULT_STYLE = "{{ default_style }}";
+let timeline = [];
+let hookSelectedStyle = DEFAULT_STYLE;
+
+function selectHookStyle(key) {
+  hookSelectedStyle = key;
+  document.querySelectorAll('#hookSwatches .swatch').forEach(el => {
+    el.classList.toggle('selected', el.dataset.style === key);
+  });
+}
+
+async function refreshMusicCount() {
+  const res = await fetch('/api/music');
+  const data = await res.json();
+  document.getElementById('musicCount').textContent = data.tracks.length;
+}
+refreshMusicCount();
+
+document.getElementById('musicUpload').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('musicUploadStatus');
+  statusEl.textContent = 'Đang tải lên...';
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch('/api/music', { method: 'POST', body: formData });
+  const data = await res.json();
+  if (data.error) {
+    statusEl.textContent = 'Lỗi: ' + data.error;
+  } else {
+    statusEl.textContent = 'Đã thêm: ' + data.filename;
+    refreshMusicCount();
+  }
+  e.target.value = '';
+});
+
+function render() {
+  const box = document.getElementById('timeline');
+  const hint = document.getElementById('emptyHint');
+  box.innerHTML = '';
+  if (timeline.length === 0) {
+    box.appendChild(hint);
+    return;
+  }
+  timeline.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'tl-item';
+
+    const fontOptions = Object.entries(FONTS).map(([key, f]) =>
+      `<option value="${key}" ${item.font_key === key ? 'selected' : ''}>${f.label}</option>`).join('');
+
+    const swatches = Object.entries(STYLES).map(([key, s]) => `
+      <div class="swatch ${item.style_key === key ? 'selected' : ''}"
+           style="background:${s.plate_css}; color:${s.text_css};"
+           title="${s.label}" onclick="updateStyle(${idx}, '${key}')">Aa</div>
+    `).join('');
+
+    div.innerHTML = `
+      <div class="tl-head">
+        <div class="tl-idx">${idx + 1}.</div>
+        <div class="tl-name">${item.file}</div>
+        <div class="tl-actions">
+          <button onclick="moveClip(${idx}, -1)">↑</button>
+          <button onclick="moveClip(${idx}, 1)">↓</button>
+          <button onclick="removeClip(${idx})">✕</button>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <label style="font-size:12px;"><input type="checkbox" ${item.auto_caption ? 'checked' : ''}
+               onchange="toggleAutoCaption(${idx}, this.checked)"> 🎙️ Phụ đề tự động (AI nghe lời thoại, hiện khớp lúc nói — chậm hơn vì phải nghe)</label>
+      </div>
+
+      ${!item.auto_caption ? `
+      <input type="text" class="full" placeholder="Từ khóa, cách nhau bằng dấu phẩy (vd: GIA ĐÌNH, TRÀ CHIỀU)" value="${item.keywordsRaw || ''}"
+             oninput="updateKeywords(${idx}, this.value)">
+      ` : `<div class="tl-row-label" style="margin-top:0;">(Đang dùng phụ đề tự động — bỏ qua từ khóa thủ công)</div>`}
+
+      <div class="tl-row">
+        <select onchange="updateSpeed(${idx}, this.value)">
+          ${[1.0, 1.1, 1.2, 1.3, 1.5].map(s => `<option value="${s}" ${item.speed == s ? 'selected' : ''}>Tốc độ x${s}</option>`).join('')}
+        </select>
+        <select onchange="updateFont(${idx}, this.value)">${fontOptions}</select>
+      </div>
+
+      <div>
+        <div class="tl-row-label">Kiểu chữ / màu (chạm để chọn)</div>
+        <div class="swatch-row">${swatches}</div>
+      </div>
+
+      <div class="tl-row">
+        <label style="font-size:12px;"><input type="checkbox" ${item.marqueeEnabled ? 'checked' : ''}
+               onchange="toggleMarquee(${idx}, this.checked)"> 📜 Băng chữ chạy trang trí (nội dung cố định mình gõ, không phải phụ đề)</label>
+        ${item.marqueeEnabled ? `
+          <select onchange="updateMarqueePos(${idx}, this.value)">
+            <option value="bottom" ${item.marquee_position === 'bottom' ? 'selected' : ''}>Chạy dưới</option>
+            <option value="top" ${item.marquee_position === 'top' ? 'selected' : ''}>Chạy trên</option>
+          </select>
+        ` : ''}
+      </div>
+      ${item.marqueeEnabled ? `
+        <input type="text" class="full" placeholder="Nội dung chữ chạy, vd: THEO DÕI KÊNH ĐỂ XEM THÊM"
+               value="${item.marquee_text || ''}" oninput="updateMarqueeText(${idx}, this.value)">
+      ` : ''}
+    `;
+    box.appendChild(div);
+  });
+}
+
+function addClip(file) {
+  timeline.push({
+    file, keywordsRaw: '', keywords: [], speed: 1.0,
+    font_key: DEFAULT_FONT, style_key: DEFAULT_STYLE,
+    marqueeEnabled: false, marquee_text: '', marquee_position: 'bottom',
+    auto_caption: false,
+  });
+  render();
+}
+
+function toggleAutoCaption(idx, checked) {
+  timeline[idx].auto_caption = checked;
+  render();
+}
+
+function updateSpeed(idx, value) {
+  timeline[idx].speed = parseFloat(value);
+}
+
+function updateFont(idx, value) {
+  timeline[idx].font_key = value;
+}
+
+function updateStyle(idx, value) {
+  timeline[idx].style_key = value;
+  render();
+}
+
+function toggleMarquee(idx, checked) {
+  timeline[idx].marqueeEnabled = checked;
+  render();
+}
+
+function updateMarqueeText(idx, value) {
+  timeline[idx].marquee_text = value;
+}
+
+function updateMarqueePos(idx, value) {
+  timeline[idx].marquee_position = value;
+}
+
+function removeClip(idx) {
+  timeline.splice(idx, 1);
+  render();
+}
+
+function moveClip(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= timeline.length) return;
+  [timeline[idx], timeline[newIdx]] = [timeline[newIdx], timeline[idx]];
+  render();
+}
+
+function updateKeywords(idx, value) {
+  timeline[idx].keywordsRaw = value;
+  timeline[idx].keywords = value.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function log(msg) {
+  const box = document.getElementById('logBox');
+  box.textContent += msg + '\n';
+  box.scrollTop = box.scrollHeight;
+}
+
+async function startRender() {
+  if (timeline.length === 0) {
+    alert('Chưa chọn clip nào.');
+    return;
+  }
+  const btn = document.getElementById('renderBtn');
+  btn.disabled = true;
+  document.getElementById('logBox').textContent = '';
+  document.getElementById('resultBox').innerHTML = '';
+
+  const payload = {
+    clips: timeline.map(t => ({
+      file: t.file, keywords: t.keywords, speed: t.speed || 1.0,
+      font_key: t.font_key || DEFAULT_FONT, style_key: t.style_key || DEFAULT_STYLE,
+      marquee_text: t.marqueeEnabled ? (t.marquee_text || '') : '',
+      marquee_position: t.marquee_position || 'bottom',
+      auto_caption: !!t.auto_caption,
+    })),
+    music_enabled: document.getElementById('musicEnabled').checked,
+    aspect_key: document.getElementById('aspectKey').value,
+    hook: {
+      enabled: document.getElementById('hookEnabled').checked,
+      title: document.getElementById('hookTitle').value || 'AI EDIT VIDEO',
+      accent: document.getElementById('hookAccent').value || 'DEMO TU DONG',
+      style_key: hookSelectedStyle,
+    },
+  };
+
+  const res = await fetch('/api/render', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (data.error) {
+    alert(data.error);
+    btn.disabled = false;
+    return;
+  }
+  poll(data.job_id);
+}
+
+async function poll(jobId) {
+  const res = await fetch(`/api/status/${jobId}`);
+  const job = await res.json();
+
+  document.getElementById('progressBar').style.width = job.percent + '%';
+  document.getElementById('percentLabel').textContent = job.percent + '%';
+  document.getElementById('logBox').textContent = job.logs.join('\n');
+  document.getElementById('logBox').scrollTop = 999999;
+
+  if (job.error) {
+    document.getElementById('renderBtn').disabled = false;
+    return;
+  }
+  if (job.done) {
+    document.getElementById('renderBtn').disabled = false;
+    document.getElementById('resultBox').innerHTML = `
+      <h2>Video hoàn chỉnh</h2>
+      <video controls src="/video/${job.output}"></video>
+      <p style="color:var(--muted);font-size:13px">File: E:\\EDIT VIDEO\\${job.output}</p>
+    `;
+    return;
+  }
+  setTimeout(() => poll(jobId), 1200);
+}
+
+// ---- Highlight tu dong ----
+let hlSelectedStyle = DEFAULT_STYLE;
+
+function selectHlStyle(key) {
+  hlSelectedStyle = key;
+  document.querySelectorAll('#hlSwatches .swatch').forEach(el => {
+    el.classList.toggle('selected', el.dataset.style === key);
+  });
+}
+
+async function refreshRawVideoList() {
+  const res = await fetch('/api/raw_videos');
+  const data = await res.json();
+  const box = document.getElementById('rawVideoList');
+  if (data.files.length === 0) {
+    box.innerHTML = '<div class="empty-hint">Chưa có video dài nào — tải lên ở trên.</div>';
+    return;
+  }
+  box.innerHTML = data.files.map(f => `
+    <div class="clip-item">
+      <span>${f}</span>
+      <button onclick="deleteRawVideo('${f}')">Xóa</button>
+    </div>
+  `).join('');
+}
+refreshRawVideoList();
+
+document.getElementById('rawVideoUpload').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+  const statusEl = document.getElementById('rawUploadStatus');
+  for (const file of files) {
+    statusEl.textContent = `Đang tải lên: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)...`;
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/raw_videos', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) {
+      statusEl.textContent = 'Lỗi: ' + data.error;
+      return;
+    }
+  }
+  statusEl.textContent = `Đã tải xong ${files.length} video.`;
+  refreshRawVideoList();
+  e.target.value = '';
+});
+
+async function deleteRawVideo(filename) {
+  await fetch(`/api/raw_videos/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+  refreshRawVideoList();
+}
+
+function hlLog(msg) {
+  const box = document.getElementById('hlLogBox');
+  box.textContent += msg + '\n';
+  box.scrollTop = box.scrollHeight;
+}
+
+async function startHighlightRender() {
+  const res0 = await fetch('/api/raw_videos');
+  const data0 = await res0.json();
+  if (data0.files.length === 0) {
+    alert('Chưa tải video dài nào lên.');
+    return;
+  }
+  const btn = document.getElementById('hlRenderBtn');
+  btn.disabled = true;
+  document.getElementById('hlLogBox').textContent = '';
+  document.getElementById('hlResultBox').innerHTML = '';
+
+  const payload = {
+    files: data0.files,
+    target_duration: parseFloat(document.getElementById('hlTargetDuration').value) || 90,
+    style_key: hlSelectedStyle,
+    font_key: document.getElementById('hlFont').value,
+    auto_caption: document.getElementById('hlAutoCaption').checked,
+    music_enabled: document.getElementById('hlMusicEnabled').checked,
+    aspect_key: document.getElementById('hlAspectKey').value,
+    hook: {
+      enabled: document.getElementById('hlHookEnabled').checked,
+      title: document.getElementById('hlHookTitle').value || 'AI EDIT VIDEO',
+      accent: document.getElementById('hlHookAccent').value || 'DEMO TU DONG',
+    },
+  };
+
+  const res = await fetch('/api/render_highlight', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (data.error) {
+    alert(data.error);
+    btn.disabled = false;
+    return;
+  }
+  pollHighlight(data.job_id);
+}
+
+async function pollHighlight(jobId) {
+  const res = await fetch(`/api/status/${jobId}`);
+  const job = await res.json();
+
+  document.getElementById('hlProgressBar').style.width = job.percent + '%';
+  document.getElementById('hlPercentLabel').textContent = job.percent + '%';
+  document.getElementById('hlLogBox').textContent = job.logs.join('\n');
+  document.getElementById('hlLogBox').scrollTop = 999999;
+
+  if (job.error) {
+    document.getElementById('hlRenderBtn').disabled = false;
+    return;
+  }
+  if (job.done) {
+    document.getElementById('hlRenderBtn').disabled = false;
+    document.getElementById('hlResultBox').innerHTML = `
+      <h2>Video Highlight</h2>
+      <video controls src="/video/${job.output}"></video>
+      <p style="color:var(--muted);font-size:13px">File: E:\\EDIT VIDEO\\${job.output}</p>
+    `;
+    return;
+  }
+  setTimeout(() => pollHighlight(jobId), 1500);
+}
+</script>
+</body>
+</html>

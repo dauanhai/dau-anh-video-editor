@@ -1,0 +1,19 @@
+# Portable runtime (Python/ffmpeg) — not committed, see README setup steps
+tools/
+
+# User content — never commit source footage, music, or rendered output
+*.mp4
+*.mov
+*.m4v
+nhac/
+nguyen_lieu_dai/
+VIDEO_HOAN_CHINH_*.mp4
+HIGHLIGHT_*.mp4
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Whisper model cache (re-downloaded automatically on first run)
+.cache/
