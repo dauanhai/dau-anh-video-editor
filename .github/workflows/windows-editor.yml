@@ -1,0 +1,37 @@
+name: Windows editor checks
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: auto-video-editor
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: auto-video-editor/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: choco install ffmpeg -y --no-progress
+      - run: npm ci
+      - run: |
+          $browser = (node scripts/setup-browser.mjs | Select-Object -Last 1).Trim()
+          "DAU_ANH_BROWSER=$browser" >> $env:GITHUB_ENV
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:e2e
+      - run: npm run package:win
+      - run: node scripts/verify-windows-package.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dau-Anh-Video-Editor-Windows
+          path: auto-video-editor/release/*.exe

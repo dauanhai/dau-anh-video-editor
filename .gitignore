@@ -17,3 +17,16 @@ __pycache__/
 
 # Whisper model cache (re-downloaded automatically on first run)
 .cache/
+
+# Desktop editor runtime and development
+.superpowers/
+node_modules/
+auto-video-editor/out/
+auto-video-editor/dist/
+auto-video-editor/release/
+auto-video-editor/.remotion/
+auto-video-editor/test-results/
+auto-video-editor/playwright-report/
+auto-video-editor/runtime/
+
+auto-video-editor/resources/windows-compositor/

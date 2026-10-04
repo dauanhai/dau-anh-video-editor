@@ -1,0 +1,52 @@
+import { z } from "zod";
+export const presetSchema = z.object({
+  id: z.string(),
+  version: z.number().int().positive(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  fps: z.number().int().positive(),
+  transitionMs: z.number().min(0).max(400),
+  musicVolume: z.number().min(0).max(0.3),
+  punchIn: z.number().min(1).max(1.1),
+  maxDurationMs: z.number().positive(),
+  label: z.string(),
+});
+export type Preset = z.infer<typeof presetSchema>;
+export const presets: Record<string, Preset> = {
+  expert: {
+    id: "expert",
+    version: 1,
+    width: 1080,
+    height: 1920,
+    fps: 30,
+    transitionMs: 0,
+    musicVolume: 0.1,
+    punchIn: 1.025,
+    maxDurationMs: 600000,
+    label: "Chuyên gia",
+  },
+  "viral-education": {
+    id: "viral-education",
+    version: 1,
+    width: 1080,
+    height: 1920,
+    fps: 30,
+    transitionMs: 150,
+    musicVolume: 0.1,
+    punchIn: 1.04,
+    maxDurationMs: 600000,
+    label: "Viral giáo dục",
+  },
+  "student-story": {
+    id: "student-story",
+    version: 1,
+    width: 1080,
+    height: 1920,
+    fps: 30,
+    transitionMs: 250,
+    musicVolume: 0.08,
+    punchIn: 1.015,
+    maxDurationMs: 600000,
+    label: "Câu chuyện học viên",
+  },
+};

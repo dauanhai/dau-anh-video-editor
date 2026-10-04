@@ -1,0 +1,23 @@
+appId: vn.dauanh.videoeditor
+productName: Dau Anh Video Editor
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: dist/remotion
+    to: remotion
+  - from: scripts/transcribe.py
+    to: scripts/transcribe.py
+  - from: resources/windows-compositor
+    to: remotion-binaries
+asar: true
+win:
+  target: nsis
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
